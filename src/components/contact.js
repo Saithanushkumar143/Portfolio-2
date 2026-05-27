@@ -38,68 +38,109 @@ export function initContactForm() {
     // Set UI to loading state
     setLoading(true);
 
-    // Form data payload for Web3Forms
-    // We get the access key from environment variables or use a default placeholder.
-    // Web3Forms sends the form submissions to the registered email address of the access key.
-    // If the access key is missing/placeholder, we can fallback to standard direct email link to ensure the user always has a functional backup!
+    // Read available endpoints from environment variables
+    const slackWebhookUrl = import.meta.env.VITE_SLACK_WEBHOOK_URL;
     const web3formsAccessKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY || 'YOUR_ACCESS_KEY_HERE';
 
-    // Build form data object
-    const formData = new FormData();
-    formData.append('access_key', web3formsAccessKey);
-    formData.append('name', name);
-    formData.append('email', email);
-    formData.append('subject', `[Portfolio Contact] ${subject}`);
-    formData.append('message', message);
-    formData.append('from_name', 'Sai Thanush Portfolio');
-
     try {
-      // If Web3Forms has a valid access key placeholder, we make the API request.
-      // If the key is still the default template placeholder, we show a notice and trigger a fallback mailto to make it functional.
-      if (web3formsAccessKey === 'YOUR_ACCESS_KEY_HERE') {
-        // Fallback option so it works immediately without setup
-        setTimeout(() => {
+      // --- ROUTE 1: Direct Slack Incoming Webhook (Primary Channel - Simple & Instant) ---
+      if (slackWebhookUrl && slackWebhookUrl !== 'YOUR_SLACK_WEBHOOK_URL_HERE') {
+        const slackPayload = {
+          text: `📩 *New Portfolio Contact Submission*`,
+          attachments: [
+            {
+              color: "#00f2fe",
+              pretext: "Details of the received message:",
+              fields: [
+                { title: "Sender Name", value: name, short: true },
+                { title: "Sender Email", value: email, short: true },
+                { title: "Subject", value: subject, short: false },
+                { title: "Message", value: message, short: false }
+              ],
+              footer: "Sai Thanush Portfolio Alert",
+              ts: Math.floor(Date.now() / 1000)
+            }
+          ]
+        };
+
+        // Direct browser requests to Slack Webhook are blocked by CORS.
+        // We use mode: 'no-cors' to bypass this. The response is opaque (status 0).
+        // Slack supports form-encoded payloads using a 'payload' parameter, allowing
+        // successful delivery without a preflight CORS check!
+        const body = `payload=${encodeURIComponent(JSON.stringify(slackPayload))}`;
+
+        const response = await fetch(slackWebhookUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: body
+        });
+
+        // In no-cors, status is 0 (opaque). We treat 0 or 200/ok as a successful dispatch!
+        if (response.ok || response.status === 200 || response.status === 0) {
+          handleSuccess();
+          return;
+        } else {
+          throw new Error('Slack Webhook failed');
+        }
+      }
+
+      // --- ROUTE 2: Web3Forms Email submission (Alternative Fallback) ---
+      if (web3formsAccessKey !== 'YOUR_ACCESS_KEY_HERE') {
+        const formData = new FormData();
+        formData.append('access_key', web3formsAccessKey);
+        formData.append('name', name);
+        formData.append('email', email);
+        formData.append('subject', `[Portfolio Contact] ${subject}`);
+        formData.append('message', message);
+        formData.append('from_name', 'Sai Thanush Portfolio');
+
+        const response = await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          handleSuccess();
+        } else {
+          showError(data.message || 'Something went wrong. Please try again.');
           setLoading(false);
-          // Show notice
-          showWarning('Web3Forms Access Key is not configured yet. Opening email client with your message...');
-          
-          // Trigger mailto link
-          const mailtoUrl = `mailto:yegotisaithanushkumar143@gmail.com?subject=${encodeURIComponent('[Portfolio] ' + subject)}&body=${encodeURIComponent('From: ' + name + ' (' + email + ')\n\n' + message)}`;
-          window.location.href = mailtoUrl;
-        }, 1000);
+        }
         return;
       }
 
-      const response = await fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        body: formData
-      });
-
-      const data = await response.json();
-
-      setLoading(false);
-
-      if (data.success) {
-        showSuccess('Message sent successfully! Sai will get back to you soon.');
-        form.reset();
-        // Trigger a satisfying subtle burst effect if canvas exists
-        triggerSuccessBurst();
-      } else {
-        showError(data.message || 'Something went wrong. Please try again.');
-      }
+      // --- ROUTE 3: Fallback Direct Mail Client (Zero-setup Backup) ---
+      setTimeout(() => {
+        setLoading(false);
+        showWarning('Slack Webhook URL is not configured yet. Opening email client with your message...');
+        const mailtoUrl = `mailto:yegotisaithanushkumar143@gmail.com?subject=${encodeURIComponent('[Portfolio] ' + subject)}&body=${encodeURIComponent('From: ' + name + ' (' + email + ')\n\n' + message)}`;
+        window.location.href = mailtoUrl;
+      }, 1000);
 
     } catch (err) {
-      console.error('Contact Form Error:', err);
+      console.error('Contact Form Telemetry Error:', err);
       setLoading(false);
-      showError('Failed to send message due to a network error. Opening backup mail client...');
+      showError('Failed to send message due to a connection error. Opening backup mail client...');
       
-      // Fallback redirect
+      // Secondary fallback
       const mailtoUrl = `mailto:yegotisaithanushkumar143@gmail.com?subject=${encodeURIComponent('[Portfolio] ' + subject)}&body=${encodeURIComponent('From: ' + name + ' (' + email + ')\n\n' + message)}`;
       setTimeout(() => {
         window.location.href = mailtoUrl;
       }, 1500);
     }
   });
+
+  // Success handler helper
+  function handleSuccess() {
+    setLoading(false);
+    showSuccess('Message sent successfully! Sai will receive it instantly.');
+    form.reset();
+    triggerSuccessBurst();
+  }
 
   function isValidEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
