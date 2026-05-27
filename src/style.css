@@ -1371,3 +1371,129 @@ footer {
   .project-card { width: 320px; height: 380px; padding: 24px; }
   .project-title { font-size: 19px; }
 }
+
+/* --- CINEMATIC INTRO VIDEO OVERLAY --- */
+.intro-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #000000;
+  z-index: 99999; /* Ensure it covers everything */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: transform 1.6s cubic-bezier(0.25, 1, 0.3, 1), 
+              opacity 1.2s cubic-bezier(0.25, 1, 0.3, 1), 
+              filter 1.4s ease;
+}
+
+/* Cinematic Zoom Out / Flying into another world effect */
+.intro-overlay.fade-out {
+  transform: scale(3.5);
+  opacity: 0;
+  filter: blur(15px);
+  pointer-events: none;
+}
+
+.intro-video-container {
+  width: 100vw;
+  height: 100vh;
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: none;
+  border: none;
+  background-color: #000;
+  transform: scale(1.05); /* Slight scale to guarantee complete crop of any bottom right watermark edge */
+  opacity: 0;
+  animation: introVideoShow 1.0s ease-out forwards 0.2s;
+}
+
+@keyframes introVideoShow {
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+#intro-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.skip-btn {
+  position: absolute;
+  bottom: 40px;
+  right: 40px;
+  background: rgba(13, 13, 29, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--white);
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  transition: var(--transition-bounce);
+  z-index: 100000;
+}
+
+.skip-btn:hover {
+  transform: translateY(-2px);
+  border-color: var(--cyan);
+  box-shadow: 0 5px 15px rgba(0, 242, 254, 0.2);
+  color: var(--cyan);
+}
+
+/* Body lock when intro is active */
+body.intro-active {
+  overflow: hidden !important;
+  height: 100vh !important;
+}
+
+/* Main page layout initial scale and transition */
+body.intro-active #three-canvas,
+body.intro-active #main-navbar,
+body.intro-active header,
+body.intro-active section,
+body.intro-active footer,
+body.intro-active .chatbot-trigger {
+  opacity: 0;
+  transform: scale(0.92);
+  filter: blur(5px);
+  pointer-events: none;
+}
+
+#three-canvas,
+#main-navbar,
+header,
+section,
+footer,
+.chatbot-trigger {
+  transition: transform 1.6s cubic-bezier(0.25, 1, 0.3, 1), 
+              opacity 1.2s cubic-bezier(0.25, 1, 0.3, 1), 
+              filter 1.4s ease;
+}
+
+@media (max-width: 768px) {
+  .intro-video-container {
+    width: 90%;
+    border-radius: 12px;
+  }
+  .skip-btn {
+    bottom: 30px;
+    right: 30px;
+    padding: 10px 18px;
+    font-size: 12px;
+  }
+}

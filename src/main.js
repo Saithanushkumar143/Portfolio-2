@@ -95,39 +95,87 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('scroll', scrollSpy);
   scrollSpy(); // run on load
 
-  // 4. GSAP Stagger Entrance Animations
-  // Animate Hero Section instantly on page mount
-  const tlHero = gsap.timeline({ defaults: { ease: 'power3.out', duration: 1 } });
+  // 4. Cinematic Intro Video Controller & GSAP Stagger Sync
+  document.body.classList.add('intro-active');
+
+  const introOverlay = document.getElementById('intro-overlay');
+  const introVideo = document.getElementById('intro-video');
+  const skipIntroBtn = document.getElementById('skip-intro-btn');
   
-  tlHero.fromTo('.hero-badge', 
-    { opacity: 0, y: -20 }, 
-    { opacity: 1, y: 0, delay: 0.2 }
-  )
-  .fromTo('.hero-title .name', 
-    { opacity: 0, y: 30 }, 
-    { opacity: 1, y: 0 }, 
-    '-=0.7'
-  )
-  .fromTo('.hero-title .grad', 
-    { opacity: 0, y: 30 }, 
-    { opacity: 1, y: 0 }, 
-    '-=0.8'
-  )
-  .fromTo('.hero-desc', 
-    { opacity: 0, y: 20 }, 
-    { opacity: 1, y: 0 }, 
-    '-=0.7'
-  )
-  .fromTo('.hero-actions .btn', 
-    { opacity: 0, y: 20 }, 
-    { opacity: 1, y: 0, stagger: 0.15 }, 
-    '-=0.8'
-  )
-  .fromTo('.hero-visual', 
-    { opacity: 0, scale: 0.8 }, 
-    { opacity: 1, scale: 1, ease: 'back.out(1.2)', duration: 1.2 }, 
-    '-=1'
-  );
+  let introFinished = false;
+
+  function finishIntro() {
+    if (introFinished) return;
+    introFinished = true;
+
+    if (introOverlay) {
+      // Cinematic transition out: scale overlay up (zoom-out feeling) and blur away
+      introOverlay.classList.add('fade-out');
+      
+      // Unlock body scrollbars
+      document.body.classList.remove('intro-active');
+
+      // Trigger hero entrance stagger exactly in-sync with video end/zoom
+      playHeroGSAP();
+
+      // Complete removal from DOM after transition completes to save resources
+      setTimeout(() => {
+        introOverlay.remove();
+      }, 1600);
+    }
+  }
+
+  // Bind video events
+  if (introVideo) {
+    introVideo.addEventListener('ended', finishIntro);
+    
+    // Autoplay safety: check if playing is blocked, if so force skip after timeout
+    introVideo.play().catch(err => {
+      console.warn("Autoplay blocked or video loading failed:", err);
+      // Let it wait for click or fallback
+    });
+  }
+
+  if (skipIntroBtn) {
+    skipIntroBtn.addEventListener('click', finishIntro);
+  }
+
+  // Failsafe timer (35 seconds fallback, ensures full completion without early skips)
+  setTimeout(finishIntro, 35000);
+
+  function playHeroGSAP() {
+    const tlHero = gsap.timeline({ defaults: { ease: 'power3.out', duration: 1 } });
+    
+    tlHero.fromTo('.hero-badge', 
+      { opacity: 0, y: -20 }, 
+      { opacity: 1, y: 0, delay: 0.3 }
+    )
+    .fromTo('.hero-title .name', 
+      { opacity: 0, y: 30 }, 
+      { opacity: 1, y: 0 }, 
+      '-=0.7'
+    )
+    .fromTo('.hero-title .grad', 
+      { opacity: 0, y: 30 }, 
+      { opacity: 1, y: 0 }, 
+      '-=0.8'
+    )
+    .fromTo('.hero-desc', 
+      { opacity: 0, y: 20 }, 
+      { opacity: 1, y: 0 }, 
+      '-=0.7'
+    )
+    .fromTo('.hero-actions .btn', 
+      { opacity: 0, y: 20 }, 
+      { opacity: 1, y: 0, stagger: 0.15 }, 
+      '-=0.8'
+    )
+    .fromTo('.hero-visual', 
+      { opacity: 0, scale: 0.8 }, 
+      { opacity: 1, scale: 1, ease: 'back.out(1.2)', duration: 1.2 }, 
+      '-=1'
+    );
+  }
 
   // 5. Scroll-Triggered Layout Staggers using IntersectionObserver
   const animObserver = new IntersectionObserver((entries, observer) => {
