@@ -1362,7 +1362,10 @@ footer {
   .hero-visual { order: -1; justify-content: center; } /* centered in mobile */
   .avatar-wrapper { width: 280px; height: 280px; margin-left: auto; margin-right: auto; } /* Scaled and centered for mobile */
   .stats-grid { grid-template-columns: 1fr; }
-  .contact-grid { grid-template-columns: 1fr; }
+  .contact-grid { grid-template-columns: 1fr; gap: 25px; }
+  .contact-card { padding: 24px 20px; }
+  .contact-info-card { padding: 24px 20px; }
+  .form-row-2 { grid-template-columns: 1fr; gap: 20px; }
   .nav-links { display: none; } /* Mobile navbar toggle handles this */
   .menu-toggle { display: block; }
   .chatbot-drawer { width: calc(100% - 40px); right: 20px; bottom: 90px; }
