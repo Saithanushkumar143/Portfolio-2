@@ -321,8 +321,17 @@ export function initThreeScene() {
       meshBox.material.color.setHex(purpleColor);
     }
 
-    // Apply interactive scales & rotations to Object 3 (Skills Cyber Cube)
-    objGroup3.scale.set(timelineHoverScale, timelineHoverScale, timelineHoverScale);
+    // Apply responsive base scales dynamically based on viewport width
+    const isMobile = window.innerWidth < 768;
+    const baseScale = isMobile ? 0.58 : 1.0;
+
+    objGroup1.scale.set(baseScale, baseScale, baseScale);
+    objGroup2.scale.set(baseScale, baseScale, baseScale);
+    
+    const combinedCubeScale = baseScale * timelineHoverScale;
+    objGroup3.scale.set(combinedCubeScale, combinedCubeScale, combinedCubeScale);
+
+    objGroup4.scale.set(baseScale, baseScale, baseScale);
 
     meshBox.rotation.y = -elapsedTime * 0.05 * timelineHoverRotationSpeed;
     meshBox.rotation.x = elapsedTime * 0.04 * timelineHoverRotationSpeed;

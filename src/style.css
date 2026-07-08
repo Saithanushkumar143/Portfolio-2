@@ -1426,6 +1426,13 @@ footer {
   object-fit: cover;
 }
 
+/* For portrait aspect ratio viewports, contain video to prevent signature cropping */
+@media (max-aspect-ratio: 1/1) {
+  #intro-video {
+    object-fit: contain;
+  }
+}
+
 .skip-btn {
   position: absolute;
   bottom: 40px;

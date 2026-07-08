@@ -128,16 +128,31 @@ document.addEventListener('DOMContentLoaded', () => {
   // Bind video events
   if (introVideo) {
     introVideo.addEventListener('ended', finishIntro);
+    introVideo.addEventListener('error', (err) => {
+      console.error("Video loading error:", err);
+      finishIntro();
+    });
     
-    // Autoplay safety: check if playing is blocked, if so force skip after timeout
+    // Autoplay safety: check if playing is blocked, if so force play or wait for user interaction
     introVideo.play().catch(err => {
       console.warn("Autoplay blocked or video loading failed:", err);
-      // Let it wait for click or fallback
+    });
+  }
+
+  // Mobile tap-to-play: tapping anywhere on the intro overlay triggers/resumes video playback
+  if (introOverlay && introVideo) {
+    introOverlay.addEventListener('click', () => {
+      if (introVideo.paused) {
+        introVideo.play().catch(e => console.log("Tap play failed:", e));
+      }
     });
   }
 
   if (skipIntroBtn) {
-    skipIntroBtn.addEventListener('click', finishIntro);
+    skipIntroBtn.addEventListener('click', (e) => {
+      e.stopPropagation(); // prevent triggering the overlay click tap-to-play
+      finishIntro();
+    });
   }
 
   // Failsafe timer (35 seconds fallback, ensures full completion without early skips)
